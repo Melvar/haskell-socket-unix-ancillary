@@ -1,3 +1,8 @@
+-- |
+-- Stability   :  experimental
+-- Portability :  Unix
+--
+-- Serializing and deserializing file descriptors as control messages for transfer over unix domain sockets.
 {-# LANGUAGE MultiParamTypeClasses #-}
 module System.Socket.Ancillary.Fds
   ( Fds (..)
@@ -22,8 +27,10 @@ import System.Socket.Msg.Internal (ControlMsg (..), ControlMsgData (..), ExpectC
 
 #include <sys/socket.h>
 
+-- | A list of `System.Posix.Types.Fd`s to transfer in a control message.
 newtype Fds = Fds [Fd] deriving (Eq, Show)
 
+-- | Construct an expectation to receive up to this number of `System.Posix.Types.Fd`s.
 expectFds :: Int -> ExpectControl Unix
 expectFds n = Expect $ n * sizeOf (undefined :: Fd)
 

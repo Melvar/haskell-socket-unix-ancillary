@@ -1,13 +1,20 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, RecordWildCards #-}
-module System.Socket.Msg.Platform
-  ( CSocklen (..)
+-- |
+-- Stability   :  experimental
+-- Portability :  Linux
+module System.Socket.Msg.Platform (
+  -- * C types
+    CSocklen (..)
   , Iovec (..)
   , Msghdr (..)
   , Cmsghdr (..)
+  -- * Constants
   , msgTruncated
   , msgControlTruncated
+  -- * System calls
   , c_sendmsg
   , c_recvmsg
+  -- * @cmsghdr@ macros
   , c_cmsg_firsthdr
   , c_cmsg_nxthdr
   , c_cmsg_space
@@ -27,10 +34,11 @@ import System.Socket (MessageFlags (..))
 
 #include "hs_msg.h"
 
--- in System.Posix.Types only since base 4.14.0.0
+-- | @socklen_t@ – in System.Posix.Types only from base 4.14.0.0 onward
 newtype CSocklen = CSocklen (#type socklen_t)
   deriving (Bounded, Enum, Eq, Integral, Num, Ord, Read, Real, Show, FiniteBits, Bits, Storable)
 
+-- | @struct iovec@
 data Iovec = Iovec { iov_base :: Ptr (), iov_len :: CSize } deriving (Show)
 
 instance Storable Iovec where
@@ -39,6 +47,7 @@ instance Storable Iovec where
   peek ptr = Iovec <$> (#peek struct iovec, iov_base) ptr <*> (#peek struct iovec, iov_len) ptr
   poke ptr (Iovec base len) = (#poke struct iovec, iov_base) ptr base *> (#poke struct iovec, iov_len) ptr len
 
+-- | @struct msghdr@ – Note: the types of some of the integer fields differ between Linux and the BSDs. Don’t hardcode their types in code which handles this struct.
 data Msghdr =
   Msghdr {
     msg_name       :: Ptr (),
@@ -47,7 +56,7 @@ data Msghdr =
     msg_iovlen     :: CSize,
     msg_control    :: Ptr (),
     msg_controllen :: CSize,
-    msg_flags      :: MessageFlags -- only to return flags from recvmsg – to pass in flags there’s an arg on each syscall
+    msg_flags      :: MessageFlags -- ^ only to return flags from @recvmsg@ – to pass in flags there’s an arg on each syscall
   } deriving (Show)
 
 instance Storable Msghdr where
@@ -73,6 +82,7 @@ instance Storable Msghdr where
     (#poke struct msghdr, msg_controllen) ptr msg_controllen
     (#poke struct msghdr, msg_flags) ptr msg_flags
 
+-- | @struct cmsghdr@
 data Cmsghdr =
   Cmsghdr {
     cmsg_len :: CSize,
@@ -95,9 +105,11 @@ instance Storable Cmsghdr where
     (#poke struct cmsghdr, cmsg_level) ptr cmsg_level
     (#poke struct cmsghdr, cmsg_type) ptr cmsg_type
 
+-- | When received, indicates that part of a datagram was discarded because the supplied buffer was too small for it.
 msgTruncated :: MessageFlags
 msgTruncated = MessageFlags (#const MSG_TRUNC)
 
+-- | When received, indicates that some control data was discarded because the supplied control message buffer was too small for all control messages.
 msgControlTruncated :: MessageFlags
 msgControlTruncated = MessageFlags (#const MSG_CTRUNC)
 
