@@ -1,14 +1,9 @@
 -- |
 -- Stability   :  experimental
 -- Portability :  Unix
-{-# LANGUAGE MultiParamTypeClasses #-}
 module System.Socket.Msg.Internal (
-  -- * Friendly control message interface
-    ControlMsg (..)
-  , ExpectControl (..)
-  , ControlMsgData (..)
   -- * Internal utilities
-  , defaultMsghdr
+    defaultMsghdr
   , mkIovec
   , unsafeUseByteStringAsIovec
   , unsafeUseByteStringsAsIovec
@@ -31,14 +26,13 @@ import qualified Data.ByteString as BS
 import Data.ByteString.Internal (createUptoN)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 
-import Foreign.C.Types (CInt, CSize)
+import Foreign.C.Types (CSize)
 --import Foreign.ForeignPtr (ForeignPtr, withForeignPtr, mallocForeignPtrBytes)
 import Foreign.Marshal (allocaBytes, with, withMany, withArray, moveBytes, fillBytes)
 import Foreign.Ptr (Ptr, castPtr, plusPtr, minusPtr, nullPtr)
 import Foreign.Storable (Storable(..))
 
-import System.Socket (Family (..))
-
+import System.Socket.Msg.ControlMsg
 import System.Socket.Msg.Platform
 
 {-
@@ -49,33 +43,6 @@ data Msg f =
     msgControl :: [ControlMsg f]
   }
 -}
-
--- | A serialized control message, parameterized by the socket family it can be used with.
-data ControlMsg f =
-  -- | To construct a control message, the level and type must be set to the constants documented for that type of control message, and the content serialized in the corresponding format.
-  --
-  -- To deconstruct a control message, the level and type must both match the constants documented for the type of control message you are handling, then the content can be deserialized. Preferably also check the payload length if you do this using @Foreign.Storable.peek@.
-  ControlMsg {
-    cMsgLevel :: CInt, -- ^ Identifies the protocol to which the control message belongs
-    cMsgType :: CInt, -- ^ Identifies the type of the control message under that protocol
-    cMsgPayload :: ByteString -- ^ The actual contents of the control message
-
---    cMsgPayloadLen :: Int
-  }
-
--- | An instruction to `System.Socket.Msg.receiveMsg` and `System.Socket.Msg.receiveMsgFrom` to prepare the reception of a control message.
-newtype ExpectControl f =
-  -- | This is the size of the payload in bytes, not including the header.
-  --
-  -- When defining a `ControlMsgData` instance, you should also supply a function to calculate the required space for the payload when receiving a control message of your type, possibly depending on parameters, and return it wrapped in `Expect`.
-  Expect { unExpect :: Int }
-
--- | Types that can be serialized to and deserialized from control messages compatible with a given socket family.
-class Family f => ControlMsgData f c where
-  -- | Serialize a value into a control message
-  toControlMsg :: c -> ControlMsg f
-  -- | Check whether a control message is of a type corresponding to this instance, and deserialize it if so
-  fromControlMsg :: ControlMsg f -> Maybe c
 
 -- | A default value for `Msghdr`s. Its buffer and array pointers are null, their associated lengths and flags are zero.
 defaultMsghdr :: Msghdr

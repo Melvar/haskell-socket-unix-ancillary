@@ -88,11 +88,11 @@ passingFd :: TestTree
 passingFd = testGroup "fd"
   [ testCase "Unix/Stream/Default:pipe" $
       bracket createPipe (both closeFd) $ \(rpipe, wpipe) -> do
-        cmsgs <- withSockets @Unix @Stream @Default (unlink_ unixPath) $ testServerClientStream [expectFds 1] [toControlMsg (Fds [rpipe])] unixAddr
-        case asum $ map fromControlMsg cmsgs of
+        cmsgs <- withSockets @Unix @Stream @Default (unlink_ unixPath) $ testServerClientStream [expectFds 1] [fdMsg [rpipe]] unixAddr
+        case asum $ map fromFdMsg cmsgs of
           Nothing -> assertFailure "No Fd ControlMsg received"
-          Just (Fds []) -> assertFailure "Empty Fd ControlMsg received"
-          Just (Fds [recvFd]) -> flip finally (closeFd recvFd) $ do
+          Just [] -> assertFailure "Empty Fd ControlMsg received"
+          Just [recvFd] -> flip finally (closeFd recvFd) $ do
             n <- fdWrite wpipe pipeMessage
             pipeRead <- fdRead recvFd n
             pipeRead @?= (pipeMessage, n)
@@ -100,11 +100,11 @@ passingFd = testGroup "fd"
       bracket createPipe (both closeFd) $ \(rpipe, wpipe) -> do
         cmsgs <- withSockets @Unix @Datagram @Default (unlink_ unixPath *> unlink_ unixClientPath) $ \socks@(server, client) -> do
           bind client unixClientAddr
-          testServerClientDatagram [expectFds 1] [toControlMsg (Fds [rpipe])] unixAddr socks
-        case asum $ map fromControlMsg cmsgs of
+          testServerClientDatagram [expectFds 1] [fdMsg [rpipe]] unixAddr socks
+        case asum $ map fromFdMsg cmsgs of
           Nothing -> assertFailure "No Fd ControlMsg received"
-          Just (Fds []) -> assertFailure "Empty Fd ControlMsg received"
-          Just (Fds [recvFd]) -> flip finally (closeFd recvFd) $ do
+          Just [] -> assertFailure "Empty Fd ControlMsg received"
+          Just [recvFd] -> flip finally (closeFd recvFd) $ do
             n <- fdWrite wpipe pipeMessage
             pipeRead <- fdRead recvFd n
             pipeRead @?= (pipeMessage, n)
@@ -116,7 +116,7 @@ passingFd = testGroup "fd"
           serverRecv <- async $ do
             (peerSock, peerAddr) <- accept server
             r <- receiveMsg peerSock 4096 [] mempty
-            sendMsg peerSock serverMessage [toControlMsg $ Fds [rpipe, wpipe]] mempty
+            sendMsg peerSock serverMessage [fdMsg [rpipe, wpipe]] mempty
             pure r
           connect client unixAddr
           sendMsg client clientMessage [] mempty
@@ -126,10 +126,10 @@ passingFd = testGroup "fd"
           (body, _, _) <- receiveMsg client 4096 [] mempty
 --          when (hflags .&. msgControlTruncated /= mempty) $ assertFailure "ControlMsg lost on receiving header"
           header <> body @?= mconcat serverMessage
-          case asum $ map fromControlMsg cmsgs of
+          case asum $ map fromFdMsg cmsgs of
             Nothing -> assertFailure "No Fd ControlMsg received"
-            Just (Fds []) -> assertFailure "Empty Fd ControlMsg received"
-            Just (Fds fds@[_,_]) -> traverse_ closeFd fds
+            Just [] -> assertFailure "Empty Fd ControlMsg received"
+            Just fds@[_,_] -> traverse_ closeFd fds
   ]
 
 both :: Applicative f => (a -> f b) -> (a, a) -> f (b, b)

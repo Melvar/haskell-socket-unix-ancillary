@@ -3,8 +3,6 @@
 -- Portability :  Unix
 --
 -- Wrappers for control messages (ancillary data) and send/receive functions which handle them.
---
--- Support for specific control message types can be added by supplying an instance of `ControlMsgData` for a type representing that control message type and a function which constructs expectations for it.
 module System.Socket.Msg (
   -- * Sending and receiving
     sendMsg
@@ -14,7 +12,6 @@ module System.Socket.Msg (
   -- * Control messages
   , ControlMsg
   , ExpectControl
-  , ControlMsgData (toControlMsg, fromControlMsg)
   -- * Message flags
   , msgTruncated
   , msgControlTruncated
@@ -28,6 +25,7 @@ import Foreign.Storable (Storable (..))
 
 import System.Socket (Socket, SocketAddress, Family, MessageFlags)
 
+import System.Socket.Msg.ControlMsg
 import System.Socket.Msg.Internal
 import System.Socket.Msg.Unsafe
 

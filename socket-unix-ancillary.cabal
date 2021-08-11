@@ -50,9 +50,10 @@ extra-source-files: CHANGELOG.md
 library
     -- Modules exported by the library.
     exposed-modules:  System.Socket.Msg.Platform,
-                      System.Socket.Msg.Internal
-                      System.Socket.Msg.Unsafe
-                      System.Socket.Msg
+                      System.Socket.Msg.ControlMsg,
+                      System.Socket.Msg.Internal,
+                      System.Socket.Msg.Unsafe,
+                      System.Socket.Msg,
                       System.Socket.Ancillary.Fds
 
     -- Modules included in this library but not exported.
