@@ -6,5 +6,5 @@ First version:
 * Bindings for `sendmsg`/`recvmsg` and associated structures
 * Higher-level wrappers for `sendmsg`/`recvmsg`
 * Types for representing control messages and expecting them
-* Class for types representing control message contents
+* Support for file descriptor control messages (`SCM_RIGHTS`)
 

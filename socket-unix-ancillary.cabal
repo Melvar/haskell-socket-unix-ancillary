@@ -23,10 +23,10 @@ synopsis:           Socket ancillary data support
 description:        An extension of the socket library to send and receive control messages, a.k.a. ancillary data, through sockets.
 
 -- URL for the project homepage or repository.
-homepage:
+homepage:           https://github.com/Melvar/haskell-socket-unix-ancillary
 
 -- A URL where users can report bugs.
--- bug-reports:
+bug-reports:        https://github.com/Melvar/haskell-socket-unix-ancillary/issues
 
 -- The license under which the package is released.
 license:            MIT
@@ -45,7 +45,8 @@ maintainer:         Melvar.Chen+hackage@gmail.com
 category:           System, Network
 
 -- Extra files to be distributed with the package, such as examples or a README.
-extra-source-files: CHANGELOG.md
+extra-source-files: README.md,
+                    CHANGELOG.md
 
 library
     -- Modules exported by the library.
