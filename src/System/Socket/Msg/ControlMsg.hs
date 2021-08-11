@@ -38,7 +38,4 @@ data ControlMsg f =
 
 -- | An instruction to `System.Socket.Msg.receiveMsg` and `System.Socket.Msg.receiveMsgFrom` to prepare the reception of a control message.
 newtype ExpectControl f =
-  -- | This is the size of the payload in bytes, not including the header.
-  --
-  -- Alongside functions to construct and/or deconstruct a control message, you should also supply a function to calculate the required space for the payload when receiving a control message of your type, possibly depending on parameters, and return it wrapped in `Expect`.
   Expect { unExpect :: Int }
