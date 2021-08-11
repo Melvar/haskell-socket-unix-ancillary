@@ -7,6 +7,7 @@ module System.Socket.Ancillary.Fds
   ( expectFds
   , fdMsg
   , fromFdMsg
+  , msgControlCloseOnExec
   ) where
 
 import Data.ByteString.Internal (unsafeCreate)
@@ -20,6 +21,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import System.Posix.Types (Fd (..))
 
+import System.Socket (MessageFlags (..))
 import System.Socket.Family.Unix (Unix)
 
 import System.Socket.Msg.ControlMsg
@@ -47,4 +49,8 @@ fromFdMsg (ControlMsg level ty payload)
   | otherwise =
       unsafePerformIO . unsafeUseAsCStringLen payload $ \(ptr, len) ->
         fmap Just $ peekArray (len `quot` sizeOf (undefined :: Fd)) (castPtr ptr)
+
+-- | Causes any received file descriptors to have their close-on-@exec@ flag set. This has the same use as other system call flags which cause the close-on-@exec@ flag to be set as soon as the file descriptor is created, such as @O_CLOEXEC@ for @open@.
+msgControlCloseOnExec :: MessageFlags
+msgControlCloseOnExec = MessageFlags (#const MSG_CMSG_CLOEXEC)
 
