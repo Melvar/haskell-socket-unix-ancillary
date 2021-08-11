@@ -27,7 +27,6 @@ import Data.ByteString.Internal (createUptoN)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 
 import Foreign.C.Types (CSize)
---import Foreign.ForeignPtr (ForeignPtr, withForeignPtr, mallocForeignPtrBytes)
 import Foreign.Marshal (allocaBytes, with, withMany, withArray, moveBytes, fillBytes)
 import Foreign.Ptr (Ptr, castPtr, plusPtr, minusPtr, nullPtr)
 import Foreign.Storable (Storable(..))
@@ -35,14 +34,6 @@ import Foreign.Storable (Storable(..))
 import System.Socket.Msg.ControlMsg
 import System.Socket.Msg.Platform
 
-{-
-data Msg f =
-  Msg {
-    msgAddress :: Maybe (SocketAddress f),
-    msgContents :: [ByteString],
-    msgControl :: [ControlMsg f]
-  }
--}
 
 -- | A default value for `Msghdr`s. Its buffer and array pointers are null, their associated lengths and flags are zero.
 defaultMsghdr :: Msghdr
@@ -96,15 +87,11 @@ peekCmsgs msgptr = do
           cmsghdr <- peek hdrptr
           let dataptr = c_cmsg_data hdrptr
               len = fromIntegral (cmsg_len cmsghdr) - (dataptr `minusPtr` hdrptr) -- attempt to invert CMSG_LEN since no inversion is provided
---          payload <- mallocForeignPtrBytes len
---          withForeignPtr payload $ \payloadptr ->
---            moveBytes payloadptr dataptr len
           payload <- packCStringLen (dataptr, len)
           let cmsg = ControlMsg {
                 cMsgLevel = cmsg_level cmsghdr,
                 cMsgType = cmsg_type cmsghdr,
                 cMsgPayload = payload
---                cMsgPayloadLength = len
               }
           nexthdr <- c_cmsg_nxthdr msgptr hdrptr
           fmap (cmsg :) $ go nexthdr
@@ -149,11 +136,6 @@ withMsghdrCmsgs msghdr cmsgs f =
               fillBytes cmsgBuf 0 (fromIntegral cmsgBufLen)
               pokeCmsgs msgptr cmsgBufEnd cmsgs
               f msgptr
-
-{-
-allocaMsghdr :: Family f => [Int] -> (Ptr Msghdr -> IO a) -> IO (Msg f, a)
-allocaMsghdr cmsgPayloadLengths f = undefined
--}
 
 -- | Helper to get the `Foreign.Storable.sizeOf` something from a pointer to it, proxy of it, etc.
 sizeOf' :: Storable a => p a -> Int

@@ -32,33 +32,6 @@ import System.Socket.Type.Stream
 import System.Socket.Msg
 import System.Socket.Ancillary.Fds
 
-{-
-main :: IO ()
-main = bracket
-  ( do
-    server <- socket :: IO (Socket Inet Stream TCP)
-    client <- socket :: IO (Socket Inet Stream TCP)
-    return (server, client)
-  )
-  ( \(server,client)-> do
-    close server
-    close client
-  )
-  ( \(server,client)-> do
-    let addr = SocketAddressInet inetLoopback port
-    let helloWorld = pack "Hello world!"
-    setSocketOption server (ReuseAddress True)
-    bind server addr
-    listen server 5
-    serverRecv <- async $ do
-      (peerSock, peerAddr) <- accept server
-      receiveMsg peerSock 4096 [] mempty
-    connect client addr
-    sendMsg client [BS.take 6 helloWorld, BS.drop 6 helloWorld] [] mempty
-    (msg, _, _) <- wait serverRecv
-    when (msg /= helloWorld) (die "Received message was bogus.")
-  )
--}
 
 main :: IO ()
 main = defaultMain $ testGroup "sendmsg/recvmsg"
@@ -124,7 +97,6 @@ passingFd = testGroup "fd"
           (clientMessageReceived, _, _) <- wait serverRecv
           (header, cmsgs, _) <- receiveMsg client 4 [expectFds 2] mempty
           (body, _, _) <- receiveMsg client 4096 [] mempty
---          when (hflags .&. msgControlTruncated /= mempty) $ assertFailure "ControlMsg lost on receiving header"
           header <> body @?= mconcat serverMessage
           case asum $ map fromFdMsg cmsgs of
             Nothing -> assertFailure "No Fd ControlMsg received"
