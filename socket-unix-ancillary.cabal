@@ -47,6 +47,7 @@ category:           System, Network
 -- Extra files to be distributed with the package, such as examples or a README.
 extra-source-files: README.md,
                     CHANGELOG.md
+                    include/hs_msg.h
 
 library
     -- Modules exported by the library.
